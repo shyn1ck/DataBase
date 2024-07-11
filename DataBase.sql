@@ -1,11 +1,11 @@
 CREATE DATABASE alif_db;
-
 CREATE TABLE product
 (
     model VARCHAR(50) PRIMARY KEY NOT NULL,
     maker VARCHAR(10)             NOT NULL,
     type  VARCHAR(50)             NOT NULL
 );
+
 INSERT INTO product (maker, model, type)
 VALUES ('B', 1121, 'PC'),
        ('A', 1232, 'PC'),
@@ -32,9 +32,9 @@ CREATE TABLE pc
     ram   SMALLINT    NOT NULL,
     hd    REAL        NOT NULL,
     cd    VARCHAR(10) NOT NULL,
-    price DECIMAL(10, 2)
+    price DECIMAL(10, 2),
+    FOREIGN KEY (model) REFERENCES product (model)
 );
-
 
 INSERT INTO pc (code, model, speed, ram, hd, cd, price)
 VALUES (1, 1232, 500, 64, 5.0, '12x', 600.0000),
@@ -50,8 +50,6 @@ VALUES (1, 1232, 500, 64, 5.0, '12x', 600.0000),
        (11, 1233, 900, 128, 40.0, '40x', 980.0000),
        (12, 1233, 800, 128, 20.0, '50x', 970.0000);
 
-
-
 CREATE TABLE laptop
 (
     code   INT         NOT NULL PRIMARY KEY,
@@ -60,7 +58,8 @@ CREATE TABLE laptop
     ram    SMALLINT    NOT NULL,
     hd     REAL        NOT NULL,
     price  DECIMAL(10, 2),
-    screen SMALLINT    NOT NULL
+    screen SMALLINT    NOT NULL,
+    FOREIGN KEY (model) REFERENCES product (model)
 );
 
 INSERT INTO laptop (code, model, speed, ram, hd, price, screen)
@@ -77,7 +76,8 @@ CREATE TABLE printer
     model VARCHAR(50),
     color CHAR(1),
     type  VARCHAR(10),
-    price DECIMAL(10, 2)
+    price DECIMAL(10, 2),
+    FOREIGN KEY (model) REFERENCES product (model)
 );
 
 INSERT INTO printer (code, model, color, type, price)
@@ -87,23 +87,6 @@ VALUES (6, '1288', 'n', 'Laser', 400.00),
        (3, '1434', 'y', 'Jet', 290.00),
        (2, '1433', 'y', 'Jet', 270.00),
        (1, '1276', 'n', 'Laser', 400.00);
-
-
--- Задача 3
-SELECT model, ram, screen
-FROM laptop
-WHERE price > 1000;
-
--- Задача 4
-SELECT code, model, color, type, price
-FROM printer
-WHERE color = 'y';
-
--- Задача 4
-SELECT model, speed, hd
-FROM pc
-WHERE (cd = '12x' OR cd = '24x')
-  AND price < 600;
 
 
 
