@@ -5,6 +5,7 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 	"log"
+	"os"
 )
 
 type Employee struct {
@@ -16,22 +17,139 @@ type Employee struct {
 	Position   string
 }
 
+var db *sql.DB
+
+func main() {
+	run()
+}
+
+func run() {
+	for {
+		fmt.Println("\nMenu:")
+		fmt.Println("1. Connect to Database")
+		fmt.Println("2. Create Table")
+		fmt.Println("3. Insert Default Data")
+		fmt.Println("4. Get All Employees")
+		fmt.Println("5. Find Employee by ID")
+		fmt.Println("6. Drop Table")
+		fmt.Println("7. Exit")
+		fmt.Print("Choose an option: ")
+
+		var choice int
+		fmt.Scanln(&choice)
+
+		switch choice {
+		case 1:
+			connectToDB()
+		case 2:
+			if db != nil {
+				createTable()
+			} else {
+				fmt.Println("Please connect to the database first.")
+			}
+		case 3:
+			if db != nil {
+				insertEmployees()
+			} else {
+				fmt.Println("Please connect to the database first.")
+			}
+		case 4:
+			if db != nil {
+				getAllEmployees()
+			} else {
+				fmt.Println("Please connect to the database first.")
+			}
+		case 5:
+			if db != nil {
+				getEmployeeByID()
+			} else {
+				fmt.Println("Please connect to the database first.")
+			}
+		case 6:
+			if db != nil {
+				dropTable()
+			} else {
+				fmt.Println("Please connect to the database first.")
+			}
+		case 7:
+			if db != nil {
+				closeDBConn()
+			}
+			fmt.Println("Exiting the program.")
+			os.Exit(0)
+		default:
+			fmt.Println("Invalid choice. Please try again.")
+		}
+	}
+}
+
+func connectToDB() {
+	var err error
+	db, err = ConnectToDB()
+	if err != nil {
+		log.Fatalf("Error connecting to database: %v", err)
+	}
+	fmt.Println("Database connection established.")
+}
+
+func closeDBConn() {
+	if db != nil {
+		if err := db.Close(); err != nil {
+			log.Fatalf("Error closing database connection: %v", err)
+		}
+		fmt.Println("Database connection closed.")
+	}
+}
+
+func createTable() {
+	if err := CreateTableIfNotExists(db); err != nil {
+		log.Fatalf("Error creating table: %v", err)
+	}
+	fmt.Println("Table created.")
+}
+
+func insertEmployees() {
+	if err := InsertEmployees(db); err != nil {
+		log.Fatalf("Error inserting employees: %v", err)
+	}
+	fmt.Println("Data inserted into the table.")
+}
+
+func getAllEmployees() {
+	employees, err := GetAllEmployees(db)
+	if err != nil {
+		log.Fatalf("Error retrieving all employees: %v", err)
+	}
+	PrintEmployees(employees)
+}
+
+func getEmployeeByID() {
+	var id int
+	fmt.Print("Enter Employee ID: ")
+	fmt.Scanln(&id)
+
+	employee, err := GetEmployeeByID(db, id)
+	if err != nil {
+		log.Fatalf("Error retrieving employee by ID: %v", err)
+	}
+	PrintEmployee(employee)
+}
+
+func dropTable() {
+	if err := DropTable(db); err != nil {
+		log.Fatalf("Error dropping table: %v", err)
+	}
+	fmt.Println("Table dropped.")
+}
+
 func ConnectToDB() (*sql.DB, error) {
-	connStr := "user=postgres password=hy.par2004 dbname=my_db sslmode=disable"
+	connStr := "user=postgres password=2003 dbname=postgres sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err
 	}
 	fmt.Println("Connected to database")
 	return db, nil
-}
-
-func CloseDBConn(db *sql.DB) error {
-	err := db.Close()
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func CreateTableIfNotExists(db *sql.DB) error {
@@ -76,7 +194,6 @@ func InsertEmployees(db *sql.DB) error {
 func GetAllEmployees(db *sql.DB) ([]Employee, error) {
 	rows, err := db.Query("SELECT id, name, department, salary, age, position FROM employees;")
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -104,43 +221,12 @@ func GetEmployeeByID(db *sql.DB, id int) (Employee, error) {
 	return e, nil
 }
 
-func main() {
-	db, err := ConnectToDB()
+func DropTable(db *sql.DB) error {
+	query := "DROP TABLE IF EXISTS employees;"
+	_, err := db.Exec(query)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	defer func() {
-		if err := CloseDBConn(db); err != nil {
-			log.Fatalf("Error closing database connection: %v", err)
-		}
-	}()
-
-	if err := InitializeDatabase(db); err != nil {
-		log.Fatalf("Error initializing database: %v", err)
-	}
-
-	employees, err := GetAllEmployees(db)
-	if err != nil {
-		log.Fatalf("Error retrieving all employees: %v", err)
-	}
-	PrintEmployees(employees)
-
-	employee, err := GetEmployeeByID(db, 2)
-	if err != nil {
-		log.Fatalf("Error retrieving employee by ID: %v", err)
-	}
-	PrintEmployee(employee)
-}
-
-func InitializeDatabase(db *sql.DB) error {
-	if err := CreateTableIfNotExists(db); err != nil {
-		return fmt.Errorf("error creating table: %w", err)
-	}
-
-	if err := InsertEmployees(db); err != nil {
-		return fmt.Errorf("error inserting employees: %w", err)
-	}
-
 	return nil
 }
 
@@ -152,5 +238,5 @@ func PrintEmployees(employees []Employee) {
 }
 
 func PrintEmployee(employee Employee) {
-	fmt.Printf("Employee with ID 2: %+v\n", employee)
+	fmt.Printf("Employee with ID %d: %+v\n", employee.ID, employee)
 }
