@@ -1,64 +1,112 @@
-CREATE DATABASE new_db;
-CREATE TABLE departments
+-- 1. One to One:
+--
+-- Таблица "Автомобили":
+-- - ID (ключ)
+-- - Марка
+-- - Модель
+-- - ВладелецID (ключ)
+--
+-- Таблица "Номерные знаки":
+-- - ID (ключ)
+-- - Номер
+-- - АвтомобильID (ключ)
+--
+-- Связь: Каждому автомобилю присваивается только один номерной знак, каждый номерной знак принадлежит только одному автомобилю.
+--
+-- 2. One to Many:
+--
+-- Таблица "Отделы":
+-- - ID (ключ)
+-- - Название
+--
+-- Таблица "Сотрудники":
+-- - ID (ключ)
+-- - Имя
+-- - ОтделID (ключ)
+--
+-- Связь: Один отдел может иметь несколько сотрудников, но каждый сотрудник принадлежит только одному отделу.
+--
+-- 3. Many to Many:
+--
+-- Таблица "Фильмы":
+-- - ID (ключ)
+-- - Название
+--
+-- Таблица "Актеры":
+-- - ID (ключ)
+-- - Имя
+-- - Фамилия
+--
+-- Таблица "Роли":
+-- - ID (ключ)
+-- - ФильмID (ключ)
+-- - АктерID (ключ)
+--
+-- Связь: Один фильм может иметь несколько актеров, и один актер может сниматься в нескольких фильмах.
+
+-- One To One
+CREATE TABLE Cars
 (
-    id              SERIAL PRIMARY KEY,
-    department_name VARCHAR(50) NOT NULL,
-    location        VARCHAR(50) NOT NULL
+    car_id   SERIAL PRIMARY KEY,
+    brand   VARCHAR(50),
+    model   VARCHAR(50),
+    owner_id INT,
+    FOREIGN KEY (owner_id) REFERENCES Owners (owner_id)
 );
 
-INSERT INTO departments (department_name, location)
-VALUES ('Sales', 'New York'),
-       ('Marketing', 'Seattle'),
-       ('IT', 'New York'),
-       ('HR', 'Chicago');
-
-CREATE TABLE employees
+CREATE TABLE Owners
 (
-    id            SERIAL PRIMARY KEY,
-    name          VARCHAR(50)    NOT NULL,
-    age           INTEGER        NOT NULL,
-    department_id INTEGER,
-    salary        DECIMAL(10, 2) NOT NULL,
-    FOREIGN KEY (department_id) REFERENCES departments (id)
+    owner_id     SERIAL PRIMARY KEY,
+    name         VARCHAR(50),
+    address      VARCHAR(100),
+    phone_number VARCHAR(15),
+    car_id       INT,
+    FOREIGN KEY (car_id) REFERENCES Cars (car_id)
 );
 
--- Заполнение таблицы employees
-INSERT INTO employees (name, age, department_id, salary)
-VALUES ('John Doe', 35, 1, 5000.00),
-       ('Jane Smith', 42, 2, 6500.00),
-       ('Bob Johnson', 28, 1, 4800.00),
-       ('Sarah Lee', 31, 3, 5200.00),
-       ('Tom Wilson', 39, 2, 5900.00),
-       ('Emily Davis', 27, 3, 4600.00),
-       ('Mike Brown', 45, NULL, 6000.00);
 
---Задача 1
-SELECT e.name, d.department_name
-FROM employees e
-         INNER JOIN departments d ON e.department_id = d.id
-WHERE d.location = 'New York';
+CREATE TABLE license_plates
+(
+    plate_id     SERIAL PRIMARY KEY,
+    plate_number VARCHAR(20),
+    car_id       INT,
+    FOREIGN KEY (car_id) REFERENCES Cars (car_id)
+);
 
---Задача 2
-SELECT e.name AS entity, 'Employee' AS type
-FROM employees e
-UNION
-SELECT d.department_name AS entity, 'Department' AS type
-FROM departments d;
+-- One to Many
+CREATE TABLE Departments
+(
+    dept_id   SERIAL PRIMARY KEY,
+    dept_name VARCHAR(50)
+);
 
---Задача 3
-SELECT e.name
-FROM employees e
-         INNER JOIN departments d ON e.department_id = d.id
-WHERE d.location = 'New York'
-INTERSECT
-SELECT e.name
-FROM employees e
-         INNER JOIN departments d ON e.department_id = d.id
-WHERE d.location = 'Seattle';
+CREATE TABLE Employees
+(
+    emp_id   SERIAL PRIMARY KEY,
+    emp_name VARCHAR(50),
+    dept_id  INT,
+    FOREIGN KEY (dept_id) REFERENCES Departments (dept_id)
+);
 
---Задача 4
-SELECT e.name, d.department_name
-FROM employees e
-         LEFT JOIN departments d ON e.department_id = d.id
-WHERE d.location IS NULL
-   OR d.location != 'Seattle';
+-- Many to Many
+CREATE TABLE Movies
+(
+    movie_id SERIAL PRIMARY KEY,
+    title   VARCHAR(100)
+);
+
+CREATE TABLE Actors
+(
+    actor_id   SERIAL PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name  VARCHAR(50)
+);
+
+CREATE TABLE Roles
+(
+    role_id  SERIAL PRIMARY KEY,
+    movie_id INT,
+    actor_id INT,
+    FOREIGN KEY (movie_id) REFERENCES Movies (movie_id),
+    FOREIGN KEY (actor_id) REFERENCES Actors (actor_id)
+);
